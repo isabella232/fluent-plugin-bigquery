@@ -119,6 +119,12 @@ module Fluent
     # prevent_duplicate_load (only load)
     config_param :prevent_duplicate_load, :bool, default: false
 
+    # insert_late_timestamp (only insert)
+    # late-adds a timestamp just before sending, so that buffering time is
+    # not taken into account. Gives a field in bigquery which represents the
+    # insert time of the row.
+    config_param :insert_late_timestamp, :string, default: nil
+
     config_param :method, :enum, list: [:insert, :load], default: :insert, skip_accessor: true
 
     # TODO
@@ -404,9 +410,12 @@ module Fluent
       end
 
       def _write(chunk, table_format, template_suffix_format)
+        now = Time.now.utc.strftime("%Y-%m-%d %H:%M:%S.%6N") if @insert_late_timestamp
+
         rows = []
         chunk.msgpack_each do |row_object|
           # TODO: row size limit
+          row_object[@insert_late_timestamp] = now if @insert_late_timestamp
           rows << row_object.deep_symbolize_keys
         end
 
