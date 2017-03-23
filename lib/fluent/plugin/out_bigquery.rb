@@ -415,7 +415,7 @@ module Fluent
         rows = []
         chunk.msgpack_each do |row_object|
           # TODO: row size limit
-          row_object[@insert_late_timestamp] = now if @insert_late_timestamp
+          row_object["json"][@insert_late_timestamp] = now if @insert_late_timestamp
           rows << row_object.deep_symbolize_keys
         end
 
